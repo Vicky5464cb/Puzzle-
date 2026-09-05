@@ -1,4 +1,4 @@
-var images = ['Unnamed.png']; // If inside a subfolder, use 'images/Unnamed.png'
+var images = ['Unnamed.png'];
 
 var currentIndex = 0;
 var totalClicks = 0;
