@@ -1,4 +1,4 @@
-var images = ['https://730.no/wp-content/uploads/2021/03/kylie-jenner-make-up-artist-Samuel-Rauda-kuwtk-season-20-keeping-up-with-the-kardashians-732x749.jpg'];
+var images = ['img src="images/unnamed.png" alt='];
 
 var currentIndex = 0;
 var totalClicks = 0;
