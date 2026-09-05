@@ -118,14 +118,17 @@ body {
 /* ===== Congrats overlay ===== */
 .congrats-overlay {
   position:fixed;
-  inset:0;
-  width:100vw;
-  height:100vh;
+  top:0;
+  left:0;
+  right:0;
+  bottom:0;
+  width:100%;
+  height:100%;
   display:none;
   align-items:center;
   justify-content:center;
   background:radial-gradient(circle at center, rgba(20,20,30,.95), rgba(0,0,0,.98));
-  z-index:9999;
+  z-index:99999;
   opacity:0;
   overflow:hidden;
 }
@@ -220,83 +223,4 @@ body {
 @keyframes sparkleTwinkle {
   0%, 100% { opacity:0; transform:scale(0); }
   50% { opacity:1; transform:scale(1.6); }
-}  height:100px;
-  outline:1px dashed lightgray;
-}
-
-#puzz i {
-  position:absolute;
-  width:100px;
-  height:100px;
-  background:var(--color);
-  background-image:var(--image);
-  background-size:300px 300px;
-  cursor:move;
-  box-shadow:0 0 10px rgba(0,0,0,.25);
-}
-
-.first {
-  border-top-left-radius:var(--border-radius);
-  background-position:left top !important;
-}
-.secon {
-  background-position:center top !important;
-}
-.third {
-/*   border-top-right-radius:var(--border-radius); */
-  background-position:right top !important;
-}
-.fourt {
-  background-position:left center !important;
-}
-.fifth {
-  background-position:center center !important;
-}
-.sixth {  
-  background-position:right center !important;
-}
-.seven {
-/*   border-bottom-left-radius:var(--border-radius); */
-  background-position:left bottom !important;
-}
-.eight {
-  background-position:center bottom !important;
-}
-.ninth {
-  border-bottom-right-radius:var(--border-radius);
-  background-position:right bottom !important;
-}
-
-.clicked {
-  box-shadow:0 0 0 4px gray !important;
-}
-
-.dropped {
-  background:var(--color);
-  background-image:var(--image);
-  background-size:300px 300px;
-}
-.done {
-  opacity:0;
-  pointer-events:none;
-}
-
-.allDone {
-  animation:allDone 1s linear forwards;
-  border:3px solid lightgray !important;
-}
-.allDone i {
-  outline:0 !important;
-}
-
-@keyframes allDone {
-  50% { transform:translate(-50%,-50%) scale(1.2); }
-}
-
-#clicks {
-  font-size:8px;
-  font-family:monospace;
-  position:absolute;
-  bottom:5px;
-  right:5px;
-}
+  }
