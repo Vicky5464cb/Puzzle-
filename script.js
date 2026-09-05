@@ -1,3 +1,6 @@
+// v3 — congrats overlay with confetti burst + fireworks (no auto-restart)
+console.log('Puzzle script v3 loaded — congrats overlay with confetti + fireworks.');
+
 var images = ['Unnamed.png'];
 
 var currentIndex = 0;
@@ -21,13 +24,18 @@ randomizeImage();
 
 // ===== Congrats overlay + confetti burst =====
 function showCongrats() {
-  var overlay = document.getElementById('congrats');
-  var finalImage = document.getElementById('finalImage');
-  var completedImage = images[(currentIndex - 1 + images.length) % images.length];
-  finalImage.style.backgroundImage = 'url(' + completedImage + ')';
-  overlay.classList.add('active');
-  launchConfetti();
-  spawnSparkles(overlay);
+  try {
+    var overlay = document.getElementById('congrats');
+    var finalImage = document.getElementById('finalImage');
+    var completedImage = images[(currentIndex - 1 + images.length) % images.length];
+    finalImage.style.backgroundImage = 'url(' + completedImage + ')';
+    overlay.classList.add('active');
+    document.body.style.overflow = 'hidden';
+    launchConfetti();
+    spawnSparkles(overlay);
+  } catch (err) {
+    console.error('showCongrats failed:', err);
+  }
 }
 
 function spawnSparkles(container) {
@@ -49,16 +57,18 @@ function launchConfetti() {
   canvas.width = window.innerWidth;
   canvas.height = window.innerHeight;
 
-  var colors = ['#ffd700', '#ff69b4', '#00e5ff', '#7cfc00', '#ff4500', '#ffffff'];
-  var particles = [];
-  var particleCount = 220;
+  var colors = ['#ffd700', '#ff69b4', '#00e5ff', '#7cfc00', '#ff4500', '#ffffff', '#ff3860', '#a56bff'];
+
+  // ---- confetti particles (burst from center) ----
+  var confetti = [];
+  var confettiCount = 200;
   var centerX = canvas.width / 2;
   var centerY = canvas.height / 2;
 
-  for (var i = 0; i < particleCount; i++) {
+  for (var i = 0; i < confettiCount; i++) {
     var angle = Math.random() * Math.PI * 2;
     var speed = 4 + Math.random() * 12;
-    particles.push({
+    confetti.push({
       x: centerX,
       y: centerY,
       vx: Math.cos(angle) * speed,
@@ -73,21 +83,64 @@ function launchConfetti() {
     });
   }
 
+  // ---- fireworks (rockets that launch then explode into rings) ----
+  var rockets = [];
+  var fireworkParticles = [];
+
+  function spawnRocket() {
+    var startX = canvas.width * (0.15 + Math.random() * 0.7);
+    rockets.push({
+      x: startX,
+      y: canvas.height,
+      targetY: canvas.height * (0.15 + Math.random() * 0.35),
+      vy: -(9 + Math.random() * 4),
+      color: colors[Math.floor(Math.random() * colors.length)],
+      trail: []
+    });
+  }
+
+  function explodeRocket(rocket) {
+    var count = 60 + Math.floor(Math.random() * 40);
+    for (var i = 0; i < count; i++) {
+      var angle = (Math.PI * 2 * i) / count;
+      var speed = 2 + Math.random() * 4;
+      fireworkParticles.push({
+        x: rocket.x,
+        y: rocket.y,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed,
+        color: rocket.color,
+        size: 2 + Math.random() * 2,
+        gravity: 0.05,
+        drag: 0.97,
+        life: 1,
+        decay: 0.012 + Math.random() * 0.01
+      });
+    }
+  }
+
+  // schedule a handful of rocket launches over the first couple seconds
+  var rocketTimers = [];
+  [0, 350, 700, 1050, 1450, 1850, 2300].forEach(function (delay) {
+    rocketTimers.push(setTimeout(spawnRocket, delay));
+  });
+
   var startTime = null;
-  var duration = 3200;
+  var duration = 4200;
 
   function animate(timestamp) {
     if (!startTime) startTime = timestamp;
     var elapsed = timestamp - startTime;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    particles.forEach(function (p) {
+    // confetti
+    confetti.forEach(function (p) {
       p.vx *= p.drag;
       p.vy = p.vy * p.drag + p.gravity;
       p.x += p.vx;
       p.y += p.vy;
       p.rotation += p.rotationSpeed;
-      p.life = Math.max(0, 1 - elapsed / duration);
+      p.life = Math.max(0, 1 - elapsed / 3200);
 
       ctx.save();
       ctx.translate(p.x, p.y);
@@ -98,7 +151,58 @@ function launchConfetti() {
       ctx.restore();
     });
 
-    if (elapsed < duration) {
+    // rockets rising
+    for (var r = rockets.length - 1; r >= 0; r--) {
+      var rocket = rockets[r];
+      rocket.trail.push({ x: rocket.x, y: rocket.y });
+      if (rocket.trail.length > 8) rocket.trail.shift();
+      rocket.y += rocket.vy;
+
+      ctx.save();
+      ctx.globalAlpha = 0.9;
+      ctx.fillStyle = rocket.color;
+      ctx.beginPath();
+      ctx.arc(rocket.x, rocket.y, 3, 0, Math.PI * 2);
+      ctx.fill();
+      rocket.trail.forEach(function (t, idx) {
+        ctx.globalAlpha = (idx / rocket.trail.length) * 0.5;
+        ctx.beginPath();
+        ctx.arc(t.x, t.y, 2, 0, Math.PI * 2);
+        ctx.fill();
+      });
+      ctx.restore();
+
+      if (rocket.y <= rocket.targetY) {
+        explodeRocket(rocket);
+        rockets.splice(r, 1);
+      }
+    }
+
+    // firework explosion particles
+    for (var f = fireworkParticles.length - 1; f >= 0; f--) {
+      var fp = fireworkParticles[f];
+      fp.vx *= fp.drag;
+      fp.vy = fp.vy * fp.drag + fp.gravity;
+      fp.x += fp.vx;
+      fp.y += fp.vy;
+      fp.life -= fp.decay;
+
+      if (fp.life <= 0) {
+        fireworkParticles.splice(f, 1);
+        continue;
+      }
+
+      ctx.save();
+      ctx.globalAlpha = Math.max(0, fp.life);
+      ctx.fillStyle = fp.color;
+      ctx.beginPath();
+      ctx.arc(fp.x, fp.y, fp.size, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+
+    var stillGoing = elapsed < duration || rockets.length > 0 || fireworkParticles.length > 0;
+    if (stillGoing) {
       requestAnimationFrame(animate);
     } else {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -181,4 +285,4 @@ function drop(ev) {
       }, 1200);
     }
   }
-                }
+      }
